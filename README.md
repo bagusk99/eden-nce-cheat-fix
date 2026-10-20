@@ -50,6 +50,15 @@ python3 nce_detect.py install 0100A3501946E000 0D9649011312F62E
 python3 nce_detect.py read    0100A3501946E000 0D9649011312F62E
 ```
 
+TitleID / BuildID boleh **ujungnya saja** (dicocokkan dengan isi HP: folder `load/` dan
+nama file cheat). Tidak ketemu atau lebih dari satu yang cocok → error + daftar kandidat.
+
+```bash
+python3 nce_detect.py fix ...E000 ...F62E      # = 0100A3501946E000 0D9649011312F62E
+```
+
+`install` untuk build yang belum punya file cheat sama sekali → BuildID harus lengkap.
+
 Konversi manual satu file (tanpa HP):
 
 ```bash

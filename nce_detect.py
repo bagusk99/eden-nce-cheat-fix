@@ -9,6 +9,9 @@
                                               cheat for that build (default: saved shift)
   nce_detect.py --test
 
+TitleID / BuildID may be a suffix (e.g. ...E000 or E000): matched against what's on the
+phone (load/ folders, cheat file names). No match or more than one -> error.
+
 How: under NCE, Eden may put a patch page in front of `main` while the cheat engine still
 uses the old base. That page starts with `B +shift` (branch into the real code), so
 reading [main+0] tells the shift. The real module has a small MOD0 offset in its 2nd word,
@@ -36,6 +39,26 @@ def eden_root():
     if not pkgs:
         sys.exit('Eden not installed (or adb not connected)')
     return f'/sdcard/Android/data/{pkgs[0]}/files'
+
+
+def resolve(arg, candidates, what):
+    """Full 16-hex id as-is; otherwise the single candidate ending with it."""
+    a = arg.lstrip('.').upper()
+    if len(a) == 16:
+        return a
+    hits = sorted({c.upper() for c in candidates if c.upper().endswith(a)})
+    if len(hits) != 1:
+        sys.exit(f'{what} ...{a}: ' + (f'ambiguous: {", ".join(hits)}' if hits else 'no match'))
+    return hits[0]
+
+
+def title_ids(root):
+    return sh(f'ls {shlex.quote(f"{root}/load")} 2>/dev/null; true').split()
+
+
+def build_ids(root, tid):
+    out = sh(f'find {shlex.quote(f"{root}/load/{tid}")} -ipath "*/cheats/*.txt" 2>/dev/null; true')
+    return [p.rsplit('/', 1)[1][:-4] for p in out.splitlines() if p]
 
 
 def detector_text(tid, bid):
@@ -147,6 +170,15 @@ def _test():
     assert parse_log("x DebugLog: ID '3' Value '00'\n" + log * 2) == ot2
     assert detector_text('T', 'B').splitlines()[4] == 'FFF81000 00001000'
     assert convert(detector_text('T', 'B'), 0)[1] == 16                # all 16 parse as main-relative
+    ids = ['0100A3501946E000', '0100A3501946F001', '01006C300E9F0000']
+    assert resolve('...E000', ids, 'T') == '0100A3501946E000'
+    assert resolve('f001', ids, 'T') == '0100A3501946F001'
+    assert resolve('0100ABCDABCDABCD', ids, 'T') == '0100ABCDABCDABCD'   # full id: no lookup
+    for bad in ('0', 'FFFF'):                                              # ambiguous / none
+        try:
+            resolve(bad, ids, 'T'); assert False
+        except SystemExit:
+            pass
     print('ok')
 
 
@@ -156,8 +188,11 @@ if __name__ == '__main__':
         sys.exit()
     if len(sys.argv) < 4 or sys.argv[1] not in ('install', 'read', 'fix'):
         sys.exit(__doc__)
-    cmd, tid, bid = sys.argv[1], sys.argv[2].upper(), sys.argv[3].upper()
+    cmd = sys.argv[1]
     root = eden_root()
+    tid = resolve(sys.argv[2], title_ids(root), 'TitleID')
+    bid = resolve(sys.argv[3], build_ids(root, tid), 'BuildID')
+    print(f'{tid} / {bid}')
     if cmd == 'install':
         cmd_install(root, tid, bid)
     elif cmd == 'read':
