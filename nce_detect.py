@@ -26,6 +26,22 @@ DETECT_DIR = 'zz NCE Detect'
 MARKER = '.nce_shifted'
 
 
+def _paint(code, text, stream):
+    return f'\033[{code}m{text}\033[0m' if stream.isatty() else text
+
+
+def ok(msg):
+    print(_paint('32', f'✔ {msg}', sys.stdout))
+
+
+def note(msg):
+    print(_paint('33', f'• {msg}', sys.stdout))
+
+
+def die(msg):
+    sys.exit(_paint('31', f'✘ {msg}', sys.stderr))
+
+
 def adb(*args, check=True):
     return subprocess.run(['adb', *args], capture_output=True, text=True, check=check).stdout
 
@@ -37,7 +53,7 @@ def sh(cmd):
 def eden_root():
     pkgs = [l.split(':', 1)[1] for l in sh('pm list packages dev.eden').split() if 'emulator' in l]
     if not pkgs:
-        sys.exit('Eden not installed (or adb not connected)')
+        die('Eden not installed (or adb not connected)')
     return f'/sdcard/Android/data/{pkgs[0]}/files'
 
 
@@ -48,7 +64,7 @@ def resolve(arg, candidates, what):
         return a
     hits = sorted({c.upper() for c in candidates if c.upper().endswith(a)})
     if len(hits) != 1:
-        sys.exit(f'{what} ...{a}: ' + (f'ambiguous: {", ".join(hits)}' if hits else 'no match'))
+        die(f'{what} ...{a}: ' + (f'ambiguous: {", ".join(hits)}' if hits else 'no match'))
     return hits[0]
 
 
@@ -114,7 +130,7 @@ def cmd_install(root, tid, bid):
         f.write(detector_text(tid, bid))
     sh(f'mkdir -p {shlex.quote(d)}')
     adb('push', f.name, f'{d}/{bid}.txt')
-    print(f'detector installed: {d}/{bid}.txt')
+    ok(f'detector installed: {d}/{bid}.txt')
     print('now: CPU backend = NCE, start the game, wait ~10s, close the game, then run `read`')
 
 
@@ -123,14 +139,14 @@ def cmd_read(root, tid, bid):
                    for n in ('eden_log.txt.old.txt', 'eden_log.txt'))
     vals = parse_log(logs)
     if vals is None:
-        sys.exit('no detector output in the log (game run long enough? closed it? NCE mode? right BuildID?)')
+        die('no detector output in the log (game run long enough? closed it? NCE mode? right BuildID?)')
     shift, ok, why = analyse(vals)
     print(why)
     if not ok:
-        sys.exit('not confirmed: detector left in place, nothing shifted')
+        die('not confirmed: detector left in place, nothing shifted')
     sh(f'rm -rf {shlex.quote(f"{root}/load/{tid}/{DETECT_DIR}")} && '
        f'echo {shift:X} > {shlex.quote(saved_shift_path(root, tid, bid))}')
-    print('detector removed, shift saved')
+    ok(f'detector removed, shift {shift:#x} saved')
     if shift:
         cmd_fix(root, tid, bid, shift)
 
@@ -140,13 +156,14 @@ def cmd_fix(root, tid, bid, by):
     backup = f'/sdcard/Download/nce_backup/{tid}-{stamp}'
     files = cheat_files(root, tid, bid)
     if not files:
-        sys.exit(f'no cheats for build {bid} under load/{tid}')
+        die(f'no cheats for build {bid} under load/{tid}')
+    done = 0
     with tempfile.TemporaryDirectory() as tmp:
         for remote in files:
             cheats_dir = remote.rsplit('/', 1)[0]
             name = remote.split('/load/', 1)[1]
             if sh(f'[ -e {shlex.quote(cheats_dir + "/" + MARKER)} ] && echo y; true').strip() == 'y':
-                print(f'skip (already shifted): {name}')
+                note(f'skip (already shifted): {name}')
                 continue
             local = Path(tmp, 'c.txt')
             adb('pull', remote, str(local))
@@ -156,8 +173,12 @@ def cmd_fix(root, tid, bid, by):
             local.write_text(new, encoding='utf-8')
             adb('push', str(local), remote)
             sh(f'echo {by:X} > {shlex.quote(cheats_dir + "/" + MARKER)}')
-            print(f'{n:3} opcodes shifted: {name}')
-    print(f'backup: {backup}')
+            ok(f'{n:3} opcodes shifted: {name}')
+            done += 1
+    if done:
+        ok(f'{done} file(s) shifted, originals backed up to {backup}')
+    else:
+        ok('nothing to do: every cheat for this build is already shifted')
 
 
 def _test():
@@ -201,7 +222,8 @@ if __name__ == '__main__':
         saved = sh(f'cat {shlex.quote(saved_shift_path(root, tid, bid))} 2>/dev/null; true').strip()
         by = sys.argv[4] if len(sys.argv) > 4 else saved
         if not by:
-            sys.exit('no saved shift for this build: run install + read first')
+            die('no saved shift for this build: run install + read first')
         if int(by, 16) == 0:
-            sys.exit('saved shift is 0: cheats for this build work as-is')
+            ok('saved shift is 0: cheats for this build work as-is')
+            sys.exit()
         cmd_fix(root, tid, bid, int(by, 16))
