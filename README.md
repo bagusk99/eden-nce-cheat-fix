@@ -1,4 +1,4 @@
-# eden-cheat-tools
+# eden-nce-cheat-fix
 
 Fix Atmosphere-format cheats that do nothing, or crash the game, on **Eden (Android) with the
 NCE CPU backend**.
@@ -63,8 +63,8 @@ too.
 ## Install
 
 ```bash
-git clone <this-repo-url> eden-cheat-tools
-cd eden-cheat-tools
+git clone https://github.com/bagusk99/eden-nce-cheat-fix.git
+cd eden-nce-cheat-fix
 python3 nce_detect.py --test    # self-test, no phone needed
 ```
 
