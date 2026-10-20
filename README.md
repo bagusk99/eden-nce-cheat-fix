@@ -14,7 +14,8 @@ jadi meleset sebesar ukuran halaman itu:
 Di mode JIT (Dynarmic) masalah ini tidak ada.
 
 Besar geseran **bukan konstanta global**: bisa beda per game dan per versi Eden.
-Contoh terukur: Octopath Traveler II (v1.0.0 & v1.1.1), Eden nightly `ceadc10` → `0x1000`.
+Contoh terukur (Eden nightly `ceadc10`): Octopath Traveler II (v1.0.0 & v1.1.1) → `0x1000`;
+`010032C00AC58000` build `2CDB9B9D70010E88` → `0` (tidak bergeser).
 
 ## Kebutuhan
 

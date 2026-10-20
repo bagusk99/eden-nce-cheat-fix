@@ -140,9 +140,9 @@ def cmd_read(root, tid, bid):
     vals = parse_log(logs)
     if vals is None:
         die('no detector output in the log (game run long enough? closed it? NCE mode? right BuildID?)')
-    shift, ok, why = analyse(vals)
+    shift, confirmed, why = analyse(vals)
     print(why)
-    if not ok:
+    if not confirmed:
         die('not confirmed: detector left in place, nothing shifted')
     sh(f'rm -rf {shlex.quote(f"{root}/load/{tid}/{DETECT_DIR}")} && '
        f'echo {shift:X} > {shlex.quote(saved_shift_path(root, tid, bid))}')
