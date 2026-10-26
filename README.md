@@ -47,6 +47,8 @@ Measured so far (Eden nightly `ceadc10`):
   build ID.
 - [switch-cheats-db](https://github.com/HamletDuFromage/switch-cheats-db): community database
   that many tools pull from.
+- [cheats/](cheats/): cheats made with this repo's scanner and tested on Eden NCE
+  (Octopath Traveler II stats).
 
 Cheats are tied to a **build ID** (the cheat file is named `<BuildID>.txt`); a cheat for another
 game version will not work. Eden shows the build ID in the game's properties, and EDC shows it
