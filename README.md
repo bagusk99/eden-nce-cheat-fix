@@ -159,3 +159,8 @@ ARM64 instructions a cheat writes (branches are PC-relative, so they stay correc
   Restore them from the backup.
 - Eden runs cheat folders in **alphabetical order**. A master code must run first, so give its
   folder a name like `00 master code`.
+
+## Make your own cheats
+
+`scanner/` is a small Cheat Engine-style TUI: scan values in the running game, find pointer
+chains from `main`, install them as cheat files. See [scanner/USAGE.md](scanner/USAGE.md).
