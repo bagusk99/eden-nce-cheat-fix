@@ -9,6 +9,8 @@ Eden needs the folder named by the TitleID only, without the game name.
 
 | Cheat | What it does |
 |---|---|
+| `00 master code` | Master code (entry hook) fixed for v1.1.1 |
+| `Gold 1M` | Gold set to 1,000,000. Tested with `00 master code` enabled |
 | `5 999 All Stats (v1.1.1)` | Every stat at the cap, all 40 characters |
 | `8 9999 Crit Evasion (v1.1.1)` | Only Critical and Evasion at the cap, other stats normal |
 
